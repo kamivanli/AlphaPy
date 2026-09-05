@@ -20,6 +20,13 @@ on everything after):
 sflow --pdate 2024-11-15
 ```
 
+Predict mode scores fixtures on/after the date with the saved model
+(run the training command above first):
+
+```
+sflow --predict --pdate 2024-11-15
+```
+
 Because the synthetic line is generated directly from each match's
 true expected goal difference, covering it is close to a coin flip
 by construction (ROC AUC around 0.45-0.55 on the test set) — this

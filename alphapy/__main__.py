@@ -351,8 +351,21 @@ def prediction_pipeline(model):
     logger.info("Number of Prediction Rows    : %d", X_predict.shape[0])
     logger.info("Number of Prediction Columns : %d", X_predict.shape[1])
 
+    # Merge training and prediction data. Factor encoding is fit on the
+    # training portion, so the combined row count must match what
+    # get_factors produces (len(X_train) + len(X_predict)); otherwise
+    # those encoded columns are silently dropped and the feature count
+    # no longer matches the training-time support masks.
+
+    if X_train.shape[1] == X_predict.shape[1]:
+        split_point = X_train.shape[0]
+        X_all = pd.concat([X_train, X_predict])
+    else:
+        raise IndexError("The number of training and prediction columns [%d, %d] must match." %
+                         (X_train.shape[1], X_predict.shape[1]))
+
     # Apply transforms to the feature matrix
-    X_all = apply_transforms(model, X_predict)
+    X_all = apply_transforms(model, X_all)
 
     # Drop features
     X_all = drop_features(X_all, drop)
@@ -365,6 +378,9 @@ def prediction_pipeline(model):
 
     # Remove low-variance features
     X_all = remove_lv_features(model, X_all)
+
+    # Keep only the prediction rows for scoring
+    _, X_all = np.array_split(X_all, [split_point])
 
     # Load the univariate support vector, if any
 
