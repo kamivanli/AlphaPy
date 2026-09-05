@@ -797,6 +797,65 @@ def make_predictions(model, algo, calibrate):
 
 
 #
+# Class BlendEstimator
+#
+
+class BlendEstimator:
+    r"""A drop-in predictor for a blended (stacked) model.
+
+    ``predict_blend`` only fits the meta-estimator on the base
+    algorithms' out-of-fold predictions; it does not by itself know
+    how to score brand new data, since that requires first running
+    each base algorithm (with its own RFE-selected feature subset,
+    if any) and then feeding those outputs into the meta-estimator.
+    This wraps that two-stage process behind the same ``predict`` /
+    ``predict_proba`` interface as a plain estimator, so it can be
+    pickled and reused directly in the prediction pipeline.
+
+    Parameters
+    ----------
+    algolist : list
+        The base algorithm abbreviations, in the order used to fit
+        the meta-estimator.
+    base_estimators : dict
+        Fitted estimator for each algorithm in ``algolist``.
+    base_support : dict
+        RFE support mask for each algorithm that had one, keyed by
+        algorithm abbreviation.
+    blend_estimator : estimator
+        The fitted meta-estimator (logistic or ridge regression).
+    model_type : alphapy.ModelType
+        Classification or regression.
+
+    """
+
+    def __init__(self, algolist, base_estimators, base_support, blend_estimator, model_type):
+        self.algolist = algolist
+        self.base_estimators = base_estimators
+        self.base_support = base_support
+        self.blend_estimator = blend_estimator
+        self.model_type = model_type
+
+    def _blend_inputs(self, X):
+        X_blend = np.zeros((X.shape[0], len(self.algolist)))
+        for i, algo in enumerate(self.algolist):
+            estimator = self.base_estimators[algo]
+            support = self.base_support.get(algo)
+            X_algo = X[:, support] if support is not None else X
+            if self.model_type == ModelType.classification:
+                X_blend[:, i] = estimator.predict_proba(X_algo)[:, 1]
+            else:
+                X_blend[:, i] = estimator.predict(X_algo)
+        return X_blend
+
+    def predict(self, X):
+        return self.blend_estimator.predict(self._blend_inputs(X))
+
+    def predict_proba(self, X):
+        return self.blend_estimator.predict_proba(self._blend_inputs(X))
+
+
+#
 # Function predict_best
 #
 
@@ -887,7 +946,14 @@ def predict_best(model):
 
     logger.info("Best Model is %s with a %s score of %.4f", best_algo, scorer, best_score)
     model.best_algo = best_algo
-    model.estimators[best_tag] = model.estimators[best_algo]
+    if best_algo == blend_tag:
+        base_estimators = {algo: model.estimators[algo] for algo in model.algolist}
+        base_support = {algo: model.support[algo] for algo in model.algolist if algo in model.support}
+        model.estimators[best_tag] = BlendEstimator(model.algolist, base_estimators,
+                                                     base_support, model.estimators[blend_tag],
+                                                     model_type)
+    else:
+        model.estimators[best_tag] = model.estimators[best_algo]
     model.preds[(best_tag, Partition.train)] = model.preds[(best_algo, Partition.train)]
     model.preds[(best_tag, Partition.test)] = model.preds[(best_algo, Partition.test)]
     if model_type == ModelType.classification:
