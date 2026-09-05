@@ -27,3 +27,8 @@ docs/.vscode/settings.json
 
 .venv/
 
+examples/*/output/
+examples/*/model/
+examples/*/plots/
+examples/*/input/*_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].csv
+
