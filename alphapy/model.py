@@ -1201,9 +1201,7 @@ def save_predictions(model, tag, partition):
     output_dir = SSEP.join([directory, 'output'])
 
     # Read the prediction frame
-    file_spec = ''.join([datasets[partition], '*'])
-    file_name = most_recent_file(input_dir, file_spec)
-    file_name = file_name.split(SSEP)[-1].split(PSEP)[0]
+    file_name = datasets[partition]
     pf = read_frame(input_dir, file_name, extension, separator)
 
     # Cull records before the prediction date
