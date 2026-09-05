@@ -24,3 +24,6 @@ alphapy/.vscode/launch.json
 alphapy/.vscode/settings.json
 *.log
 docs/.vscode/settings.json
+
+.venv/
+

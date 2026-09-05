@@ -57,7 +57,7 @@ from importlib import import_module
 import logging
 import numpy as np
 import pandas as pd
-import parser
+import ast
 import re
 import sys
 
@@ -122,7 +122,7 @@ class Variable(object):
                     logger.info("Invalid variable key: %s", name)
                     return
                 try:
-                    result = parser.expr(expr)
+                    result = ast.parse(expr, mode='eval')
                 except:
                     logger.info("Invalid expression: %s", expr)
                     return

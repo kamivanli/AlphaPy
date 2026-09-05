@@ -163,7 +163,9 @@ def read_frame(directory, filename, extension, separator,
     logger.info("Loading data from %s", file_all)
     try:
         df = pd.read_csv(file_all, sep=separator, index_col=index_col,
-                         squeeze=squeeze, low_memory=False)
+                         low_memory=False)
+        if squeeze:
+            df = df.squeeze("columns")
     except:
         df = pd.DataFrame()
         logger.info("Could not find or access %s", file_all)

@@ -261,10 +261,10 @@ def impute_values(feature, dt, sentinel):
 
     try:
         # for pandas series
-        feature = feature.values.reshape(-1, 1)
+        feature = feature.to_numpy(copy=True).reshape(-1, 1)
     except:
         # for numpy array
-        feature = feature.reshape(-1, 1)
+        feature = np.array(feature, copy=True).reshape(-1, 1)
 
     if dt == 'float64':
         logger.info("    Imputation for Data Type %s: Median Strategy" % dt)
@@ -375,7 +375,7 @@ def get_polynomials(features, poly_degree):
                                degree=poly_degree,
                                include_bias=False)
     poly_features = polyf.fit_transform(features)
-    poly_fnames = polyf.get_feature_names()
+    poly_fnames = polyf.get_feature_names_out()
     return poly_features, poly_fnames
 
 
@@ -432,7 +432,7 @@ def get_text_features(fnum, fname, df, nvalues, vectorize, ngrams_max):
         vectorizer = TfidfVectorizer(ngram_range=[1, ngrams_max])
         try:
             new_features = vectorizer.fit_transform(feature)
-            new_fnames = vectorizer.get_feature_names()
+            new_fnames = vectorizer.get_feature_names_out()
             logger.info("Feature %d: %s => Vectorization Succeeded", fnum, fname)
         except:
             logger.info("Feature %d: %s => Vectorization Failed", fnum, fname)
@@ -587,7 +587,7 @@ def get_factors(model, X_train, X_test, y_train, fnum, fname,
         logger.info("Transforming testing features for %s", fname)
         ftest = enc.transform(df_test)
         # get feature names
-        all_fnames = enc.get_feature_names()
+        all_fnames = enc.get_feature_names_out()
         # concatenate all generated features
         all_features = np.row_stack((ftrain, ftest))
     else:
@@ -1050,7 +1050,7 @@ def create_features(model, X, X_train, X_test, y_train):
             if nunique == 1 and np.isnan(X[fname].unique()):
                 # all nan, features shape is (len, 0), cause Mismatched Features and Names
                 features = np.zeros((X.shape[0], 1))
-        elif dtype == 'object':
+        elif dtype == 'object' or dtype == 'str':
             features, fnames = get_text_features(fnum, fname, X, nunique, vectorize, ngrams_max)
         else:
             raise TypeError("Base Feature Error with unrecognized type %s" % dtype)

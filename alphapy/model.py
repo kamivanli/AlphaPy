@@ -678,8 +678,18 @@ def first_fit(model, algo, est):
                                           random_state=seed)
         eval_set = [(X1, y1), (X2, y2)]
         eval_metric = xgb_score_map[scorer]
-        est.fit(X1, y1, eval_set=eval_set, eval_metric=eval_metric,
-                early_stopping_rounds=esr)
+        # newer xgboost versions require eval_metric/early_stopping_rounds
+        # to be set on the estimator rather than passed to fit()
+        try:
+            est.set_params(eval_metric=eval_metric, early_stopping_rounds=esr)
+            est.fit(X1, y1, eval_set=eval_set)
+            # early_stopping_rounds on the estimator forces every subsequent
+            # fit() call to require an eval_set, so clear it now that the
+            # initial early-stopping fit is done.
+            est.set_params(early_stopping_rounds=None)
+        except TypeError:
+            est.fit(X1, y1, eval_set=eval_set, eval_metric=eval_metric,
+                    early_stopping_rounds=esr)
     else:
         est.fit(X_train, y_train)
 

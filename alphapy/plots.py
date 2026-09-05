@@ -72,11 +72,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import pandas as pd
-from scipy import interp
 import seaborn as sns
 from sklearn.calibration import calibration_curve
 from sklearn.inspection import partial_dependence
-from sklearn.inspection import plot_partial_dependence
 from sklearn.metrics import auc
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import roc_curve
@@ -476,7 +474,8 @@ def plot_learning_curve(model, partition):
 
     # Set cross-validation parameters to get mean train and test curves.
 
-    cv = StratifiedKFold(n_splits=cv_folds, shuffle=shuffle, random_state=seed)
+    cv = StratifiedKFold(n_splits=cv_folds, shuffle=shuffle,
+                         random_state=seed if shuffle else None)
 
     # Plot a learning curve for each algorithm.
 

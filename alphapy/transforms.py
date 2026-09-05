@@ -1344,7 +1344,7 @@ def split_to_letters(f, c):
     fc = f[c]
     new_feature = None
     dtype = fc.dtypes
-    if dtype == 'object':
+    if dtype == 'object' or dtype == 'str':
         fc.fillna(NULLTEXT, inplace=True)
         maxlen = fc.astype(str).str.len().max()
         if maxlen > 1:
